@@ -1,6 +1,5 @@
-import json, urllib, urllib2, os
+import json, urllib, urllib2, os,time
 from bs4 import BeautifulSoup
-import time
 
 def url_to_soup(url):
     hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
@@ -23,11 +22,9 @@ def get_instagram_page_image(soup, s_id):
 
 def get_file_images(s_file, debug=False):
     f0 = open(s_file, 'r')
-    i = 0
     t0 = time.time()
     n_i, n_t, n_err = 0, 0, 0
     for line in f0:
-        i += 1
         try:
             d0 = json.loads(line)
             s_id = d0['id_str']
@@ -48,8 +45,7 @@ def get_file_images(s_file, debug=False):
                     except:
                         n_err += 1
                         continue
-        except:
-            print i
+        except
             print json.dumps(line)
             break
 
@@ -70,4 +66,5 @@ def main(tweet_file_path, debug=False):
         os.rename(tweet_file_path + "/" + file, tweet_file_path + "/analyzed/" + file)
 
 if __name__ == '__main__':
-    main()
+    tweet_file_path = '/Volumes/ed_00/data/raw_tweet_data'
+    main(tweet_file_path, debug=True)

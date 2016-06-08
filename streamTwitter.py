@@ -41,7 +41,7 @@ def twitterreq(oauth_token, oauth_consumer, url, http_method, parameters):
 def stream_data(response, response_open_time):
     current_block = datetime.datetime.now()
     current_string = str(current_block.date())+"_"+str(current_block.time())+".json"
-    out_file = open("./raw_tweet_data/live_stream/"+current_string, "w", 0)
+    out_file = open("/Volumes/ed_00/data/raw_tweet_data/live_stream/"+current_string, "w", 0)
     for line in response:
         now = datetime.datetime.now()
         print "response at", str(now)
@@ -49,7 +49,7 @@ def stream_data(response, response_open_time):
         if diff.seconds > 180:
             out_file.close()
             response_up_time = now - response_open_time
-            os.rename("raw_tweet_data/live_stream/"+current_string, "raw_tweet_data/"+current_string)
+            os.rename("/Volumes/ed_00/data/raw_tweet_data/live_stream/"+current_string, "/Volumes/ed_00/data/raw_tweet_data/"+current_string)
             if response_up_time.seconds > 900:
                 return
             current_block = now
