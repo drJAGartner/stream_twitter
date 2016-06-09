@@ -49,13 +49,13 @@ def stream_data(response, response_open_time):
         if diff.seconds > 180:
             out_file.close()
             response_up_time = now - response_open_time
-            os.rename("/Volumes/ed_00/data/raw_tweet_data/live_stream/"+current_string, "/Volumes/ed_00/data/raw_tweet_data/"+current_string)
+            os.rename("/Volumes/ed_00/data/raw_tweet_data/live_stream/"+current_string, "/Volumes/ed_00/data/raw_tweet_data/tweets_no_scraped_images/"+current_string)
             if response_up_time.seconds > 900:
                 return
             current_block = now
             print "\nNew File:", str(current_block)
             current_string = str(current_block.date())+"_"+str(current_block.time())+".json"
-            out_file = open("./raw_tweet_data/live_stream/"+current_string, "w", 0)
+            out_file = open("/Volumes/ed_00/data/raw_tweet_data/live_stream/"+current_string, "w", 0)
             #every 2 hours, close existing connection, open under new key to avoid timeout
         try:
             json.load
