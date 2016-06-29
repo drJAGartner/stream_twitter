@@ -74,5 +74,6 @@ def main(tweet_file_path, debug=False):
     print "No more files to analyze, program terminating"
 
 if __name__ == '__main__':
-    tweet_file_path = '/Volumes/ed_00/data/raw_tweet_data'
+    #tweet_file_path = '/Volumes/ed_00/data/raw_tweet_data'
+    tweet_file_path = '/Users/jgartner/Desktop/raw_tweet_data'
     main(tweet_file_path, debug=True)

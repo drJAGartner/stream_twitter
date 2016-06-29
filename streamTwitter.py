@@ -1,9 +1,6 @@
-import json
-import sys
 import oauth2 as oauth
 import urllib2 as urllib
-import datetime
-import os
+import datetime, time, os, sys, json
 
 def getCredentials():
     #you'll need to get these by registering for your own twitter developer account
@@ -38,34 +35,38 @@ def twitterreq(oauth_token, oauth_consumer, url, http_method, parameters):
     response = opener.open(url, encoded_post_data)
     return response
 
-def stream_data(response, response_open_time):
+def stream_data(response, response_open_time, tweet_file_path):
     current_block = datetime.datetime.now()
     current_string = str(current_block.date())+"_"+str(current_block.time())+".json"
-    out_file = open("/Volumes/ed_00/data/raw_tweet_data/live_stream/"+current_string, "w", 0)
-    for line in response:
-        now = datetime.datetime.now()
-        print "response at", str(now)
-        diff = now - current_block
-        if diff.seconds > 180:
-            out_file.close()
-            response_up_time = now - response_open_time
-            os.rename("/Volumes/ed_00/data/raw_tweet_data/live_stream/"+current_string, "/Volumes/ed_00/data/raw_tweet_data/tweets_no_scraped_images/"+current_string)
-            if response_up_time.seconds > 900:
-                return
-            current_block = now
-            print "\nNew File:", str(current_block)
-            current_string = str(current_block.date())+"_"+str(current_block.time())+".json"
-            out_file = open("/Volumes/ed_00/data/raw_tweet_data/live_stream/"+current_string, "w", 0)
-            #every 2 hours, close existing connection, open under new key to avoid timeout
-        try:
-            json.load
-            out_file.write(line.strip()+"\n")
-            print ".",
-        except:
-            print "json load error:", sys.exc_info()[0]
-            continue
+    out_file = open(tweet_file_path+"/live_stream/"+current_string, "w", 0)
+    try:
+        for line in response:
+            now = datetime.datetime.now()
+            print "response at", str(now)
+            diff = now - current_block
+            if diff.seconds > 180:
+                out_file.close()
+                response_up_time = now - response_open_time
+                os.rename(tweet_file_path+"/live_stream/"+current_string, tweet_file_path+"/tweets_no_scraped_images/"+current_string)
+                if response_up_time.seconds > 900:
+                    return
+                current_block = now
+                print "\nNew File:", str(current_block)
+                current_string = str(current_block.date())+"_"+str(current_block.time())+".json"
+                out_file = open(tweet_file_path+"/live_stream/"+current_string, "w", 0)
+                #every 2 hours, close existing connection, open under new key to avoid timeout
+            try:
+                json.load
+                out_file.write(line.strip()+"\n")
+                print ".",
+            except:
+                print "json load error:", sys.exc_info()[0]
+                continue
+    except:
+        print "No response error"
+        time.sleep(20)
 
-def main():
+def main(tweet_file_path):
     print "Start Streaming"
     auth_info = getCredentials()
     auth_counter = 0
@@ -79,7 +80,7 @@ def main():
     print "Response open time: ", str(response_open_time)
 
     while True:
-        stream_data(response, response_open_time)
+        stream_data(response, response_open_time, tweet_file_path)
         response_open_time = datetime.datetime.now()
         print "New connection @", str(response_open_time)
         response.close()
@@ -89,4 +90,6 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    #tweet_file_path = '/Volumes/ed_00/data/raw_tweet_data'
+    tweet_file_path = '/Users/jgartner/Desktop/raw_tweet_data'
+    main(tweet_file_path)
