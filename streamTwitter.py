@@ -81,11 +81,21 @@ def main(tweet_file_path):
 
     while True:
         stream_data(response, response_open_time, tweet_file_path)
-        response_open_time = datetime.datetime.now()
-        print "New connection @", str(response_open_time)
+
         response.close()
-        auth_counter = (auth_counter+1)%len(auth_info)
-        response = twitterreq(auth_info[auth_counter][0], auth_info[auth_counter][1], url, http_method, pars)
+        b_new_response = False
+        while b_new_response == False:
+            try:
+                auth_counter = (auth_counter+1) % len(auth_info)
+                response_open_time = datetime.datetime.now()
+                response = twitterreq(auth_info[auth_counter][0], auth_info[auth_counter][1], url, http_method, pars)
+                print "New connection @", str(response_open_time)
+                b_new_response = True
+            except:
+                print "*****\nResponse Error @:", response_open_time
+                print "->", sys.exc_info()[0],"\nWait for 30 seconds, try again."
+                time.sleep(30)
+
 
 
 
