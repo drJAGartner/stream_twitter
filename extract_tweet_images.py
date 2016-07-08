@@ -1,4 +1,4 @@
-import json, urllib, urllib2, os,time
+import json, urllib2, os, time, argparse
 from bs4 import BeautifulSoup
 
 def url_to_soup(url):
@@ -28,29 +28,20 @@ def get_file_images(tweet_file_path, s_file, debug=False):
     for line in f0:
         try:
             d0 = json.loads(line)
-            # if 'media' in d0['entities']:
-            #     d_m = d0['entities']['media']
-            #     try:
-            #         urllib.urlretrieve(d_m[0]['media_url_https'], tweet_file_path+"/images/"+s_id+".jpg")
-            #         n_t += 1
-            #     except:
-            #         continue
             img_url = None
             if d0['source'].find('instagram') != -1:
                 for d_url in d0['entities']['urls']:
                     try:
                         soup = url_to_soup(d_url['expanded_url'])
                         img_url = get_instagram_page_image(soup)
-                        if img_url is not None:
-                            d0['instagram'] = {'img_url':img_url}
                         n_i += 1
                     except:
                         n_err += 1
-
-            if d0['source'].find('instagram') != -1:
-                print "Key check:",
-                print 'instagram' in d0.keys()
-            f1.write(json.dumps(d0) + "\n")
+            if img_url != None:
+                print img_url
+                f1.write(line[:-2]+', "instagram":{"img_url":"'+img_url+'"}'+line[-2:])
+            else:
+                f1.write(line)
         except:
             print json.dumps(line)
             break
@@ -62,24 +53,35 @@ def get_file_images(tweet_file_path, s_file, debug=False):
 
 def main(tweet_file_path, debug=False):
     n_sleep = 0
-    while n_sleep<5:
+    while n_sleep<60:
         if len(os.listdir(tweet_file_path+'/tweets_no_scraped_images/')) > 0:
+            n_sleep = 0
             files = sorted(os.listdir(tweet_file_path+'/tweets_no_scraped_images/'), key=lambda x: os.stat(os.path.join(tweet_file_path+'/tweets_no_scraped_images/', x)).st_mtime)
             for s_file in files:
                 t_out = time.time()
                 if debug:
                     print "Processing file:", s_file
                 get_file_images(tweet_file_path, s_file, debug=debug)
-                #os.rename(tweet_file_path +'/tweets_no_scraped_images/' + s_file, tweet_file_path + '/tweets_w_scraped_images/' + s_file)
-                os.remove(tweet_file_path +'/tweets_no_scraped_images/' + s_file)
+                try:
+                    os.remove(tweet_file_path +'/tweets_no_scraped_images/' + s_file)
+                except:
+                    print "Error deleting file: " + tweet_file_path +'/tweets_no_scraped_images/' + s_file
                 if debug:
                     print "Finished in", time.time() - t_out, "seconds "
         else:
             time.sleep(300)
             n_sleep += 1
-    print "No more files to analyze, program terminating"
+            if n_sleep > 5:
+                print "There have been no files to analyze for", n_sleep*5, "minutes, the twitter stream may be down"
+    print "No new files for 3 hours, shutting down."
+
+
 
 if __name__ == '__main__':
-    #tweet_file_path = '/Volumes/ed_00/data/raw_tweet_data'
-    tweet_file_path = '/Users/jgartner/Desktop/raw_tweet_data'
-    main(tweet_file_path, debug=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("tweet_file_path", help="Directory where tweet files will be written locally", default="./raw_tweet_data")
+    parser.add_argument("debug", help="Verbose Screen output for debugging", type=bool, default=False)
+    args = parser.parse_args()
+    tweet_file_path = args.tweet_file_path
+    debug = args.debug
+    main(tweet_file_path, debug = debug)
