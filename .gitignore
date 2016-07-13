@@ -1,0 +1,6 @@
+tmp
+.idea
+*.log
+.DS_Store
+private
+downloads

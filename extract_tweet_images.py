@@ -79,9 +79,9 @@ def main(tweet_file_path, debug=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("tweet_file_path", help="Directory where tweet files will be written locally", default="./raw_tweet_data")
-    parser.add_argument("debug", help="Verbose Screen output for debugging", type=bool, default=False)
+    parser.add_argument("--outdir", help="Directory where tweet files will be written locally", default="./downloads")
+    parser.add_argument("--debug", help="Verbose Screen output for debugging", type=bool, default=False)
     args = parser.parse_args()
-    tweet_file_path = args.tweet_file_path
+    tweet_file_path = args.outdir
     debug = args.debug
     main(tweet_file_path, debug = debug)

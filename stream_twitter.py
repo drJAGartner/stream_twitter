@@ -2,10 +2,15 @@ import oauth2 as oauth
 import urllib2 as urllib
 import datetime, time, os, sys, json, argparse
 
-def getCredentials():
+twitter_keys_file = os.environ.get('TWITTER_KEYS_FILE')
+if twitter_keys_file is None:
+    print "Missing TWITTER_KEYS_FILE env var. Cannot continue."
+    sys.exit(1) # 1 = stop 'nix | piping, if used
+
+def get_credentials():
     #you'll need to get these by registering for your own twitter developer account
     #i've created multiple access keys to loop through to avoid timeout
-    dict_llaves = json.load(open("private/keyFile.json"))
+    dict_llaves = json.load(open(twitter_keys_file))
     auth_info = []
     for llave in dict_llaves:
         api_key = llave["consumer_key"]
@@ -34,7 +39,7 @@ def twitterreq(oauth_token, oauth_consumer, url, http_method, parameters, debug=
     opener.add_handler(https_handler)
     res_try_time = datetime.datetime.now()
     if debug:
-            print "Try to get response at ", res_try_time
+        print "Try to get response at ", res_try_time
     response = opener.open(url, encoded_post_data, 30)
     return response
 
@@ -76,7 +81,7 @@ def stream_data(response, response_open_time, tweet_file_path, debug = False):
 def main(tweet_file_path, debug=False):
     if debug:
         print "Start Streaming"
-    auth_info = getCredentials()
+    auth_info = get_credentials()
     auth_counter = 0
 
     http_method = "GET"
@@ -115,9 +120,9 @@ def main(tweet_file_path, debug=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("tweet_file_path", help="Directory where tweet files will be written locally", default="./raw_tweet_data")
-    parser.add_argument("debug", help="Verbose Screen output for debugging", type=bool, default=False)
+    parser.add_argument("--outdir", help="Directory where tweet files will be written locally", default="./downloads")
+    parser.add_argument("--debug", help="Verbose Screen output for debugging", type=bool, default=False)
     args = parser.parse_args()
-    tweet_file_path = args.tweet_file_path
+    tweet_file_path = args.outdir
     debug = args.debug
     main(tweet_file_path, debug = debug)
