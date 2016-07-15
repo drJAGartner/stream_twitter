@@ -1,16 +1,26 @@
 import oauth2 as oauth
 import urllib2 as urllib
 import datetime, time, os, sys, json, argparse
+sys.path.append(os.path.join(os.path.dirname(__file__), "../util"))
+import dirtools
 
-twitter_keys_file = os.environ.get('TWITTER_KEYS_FILE')
-if twitter_keys_file is None:
-    print "Missing TWITTER_KEYS_FILE env var. Cannot continue."
-    sys.exit(1) # 1 = stop 'nix | piping, if used
+twitter_keys = os.environ.get("TWITTER_KEYS")
+
+if twitter_keys is None:
+    try:
+        # fallback to local file
+        keys_file = "./private/twitter_keys.json"
+        with open(keys_file, 'r') as content:
+            twitter_keys = content.read()
+    except:
+        print "Missing TWITTER_KEYS env var or file %s. Cannot continue." % keys_file
+        sys.exit(1) # 1 = stop 'nix | piping, if used
+
 
 def get_credentials():
     #you'll need to get these by registering for your own twitter developer account
     #i've created multiple access keys to loop through to avoid timeout
-    dict_llaves = json.load(open(twitter_keys_file))
+    dict_llaves = json.loads(twitter_keys)
     auth_info = []
     for llave in dict_llaves:
         api_key = llave["consumer_key"]
@@ -43,10 +53,10 @@ def twitterreq(oauth_token, oauth_consumer, url, http_method, parameters, debug=
     response = opener.open(url, encoded_post_data, 30)
     return response
 
-def stream_data(response, response_open_time, tweet_file_path, debug = False):
+def stream_data(response, response_open_time, outdir, debug = False):
     current_block = datetime.datetime.now()
     current_string = str(current_block.date())+"_"+str(current_block.time())+".json"
-    out_file = open(tweet_file_path+"/live_stream/"+current_string, "w", 0)
+    out_file = open(outdir+"/stream/"+current_string, "w", 0)
     try:
         for line in response:
             now = datetime.datetime.now()
@@ -56,14 +66,14 @@ def stream_data(response, response_open_time, tweet_file_path, debug = False):
             if diff.seconds > 180:
                 out_file.close()
                 response_up_time = now - response_open_time
-                os.rename(tweet_file_path+"/live_stream/"+current_string, tweet_file_path+"/tweets_no_scraped_images/"+current_string)
+                os.rename(outdir+"/stream/"+current_string, outdir+"/wip/"+current_string)
                 if response_up_time.seconds > 900:
                     return
                 current_block = now
                 if debug:
                     print "\nNew File:", str(current_block)
                 current_string = str(current_block.date())+"_"+str(current_block.time())+".json"
-                out_file = open(tweet_file_path+"/live_stream/"+current_string, "w", 0)
+                out_file = open(outdir+"/stream/"+current_string, "w", 0)
                 #every 2 hours, close existing connection, open under new key to avoid timeout
             try:
                 json.load
@@ -78,14 +88,24 @@ def stream_data(response, response_open_time, tweet_file_path, debug = False):
             print "No response error"
         time.sleep(20)
 
-def main(tweet_file_path, debug=False):
+def main(args):
+    outdir = args.outdir
+    coordinates = ','.join(args.coordinates)
+    debug = args.debug
+    # prep output dirs
+    wip_path = outdir + "/wip/"
+    stream_path = outdir + "/stream/"
+
+    dirtools.mkdir_p(wip_path)
+    dirtools.mkdir_p(stream_path)
+
     if debug:
         print "Start Streaming"
     auth_info = get_credentials()
     auth_counter = 0
 
     http_method = "GET"
-    url = "https://stream.twitter.com/1.1/statuses/filter.json?stall_warnings=true&locations=-11.9591,49.637,2.8771,57.863"
+    url = "https://stream.twitter.com/1.1/statuses/filter.json?stall_warnings=true&locations=" + coordinates
     if debug:
         print "Using url", url
     pars = []
@@ -95,7 +115,7 @@ def main(tweet_file_path, debug=False):
         print "Response open time: ", str(response_open_time)
 
     while True:
-        stream_data(response, response_open_time, tweet_file_path)
+        stream_data(response, response_open_time, outdir)
         if debug:
             print "Exit stream_data"
         response.close()
@@ -120,9 +140,10 @@ def main(tweet_file_path, debug=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--outdir", help="Directory where tweet files will be written locally", default="./downloads")
-    parser.add_argument("--debug", help="Verbose Screen output for debugging", type=bool, default=False)
+    # -11.9591,49.637,2.8771,57.863
+    parser.add_argument("coordinates", nargs="+",
+        help="southwest/northeast coordinates: ex. 1 10 2 20")
+    parser.add_argument("--outdir", help="Directory where tweet files will be written locally", default="downloads/files")
+    parser.add_argument("--debug", help="Verbose logging", action="store_true", default=False)
     args = parser.parse_args()
-    tweet_file_path = args.outdir
-    debug = args.debug
-    main(tweet_file_path, debug = debug)
+    main(args)

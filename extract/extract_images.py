@@ -1,5 +1,7 @@
-import json, urllib2, os, time, argparse
+import json, urllib2, os, time, argparse, sys
 from bs4 import BeautifulSoup
+sys.path.append(os.path.join(os.path.dirname(__file__), "../util"))
+import dirtools
 
 def url_to_soup(url):
     hdr = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11',
@@ -21,9 +23,9 @@ def get_instagram_page_image(soup):
                 return m['content'][:ind+3]
     return None
 
-def get_file_images(tweet_file_path, s_file, debug=False):
-    f0 = open(tweet_file_path + '/tweets_no_scraped_images/' + s_file, 'r')
-    f1 = open(tweet_file_path + '/tweets_w_img_url/' + s_file, 'w')
+def get_file_images(file_path, debug=False):
+    f0 = open(file_path, 'r')
+    f1 = open(file_path.replace('/wip', ''), 'w')
     n_i, n_t, n_err = 0, 0, 0
     for line in f0:
         try:
@@ -46,28 +48,37 @@ def get_file_images(tweet_file_path, s_file, debug=False):
             print json.dumps(line)
             break
     f1.close()
-    if debug:
-        print 'Errors:', n_err
-        print 'Images from twitter:', n_t
-        print 'Images from instagram:', n_i
+    print 'Errors:', n_err
+    print 'Images from twitter:', n_t
+    print 'Images from instagram:', n_i
 
-def main(tweet_file_path, debug=False):
+def main(args):
+    outdir = args.outdir
+    debug = args.debug
+
+    # prep output dirs
+    wip_path = outdir + "/wip/"
+
+    dirtools.mkdir_p(wip_path)
+
     n_sleep = 0
     while n_sleep<60:
-        if len(os.listdir(tweet_file_path+'/tweets_no_scraped_images/')) > 0:
+        num_files = len(os.listdir(wip_path))
+        print "%d files found to process..." % (num_files)
+        if num_files > 0:
             n_sleep = 0
-            files = sorted(os.listdir(tweet_file_path+'/tweets_no_scraped_images/'), key=lambda x: os.stat(os.path.join(tweet_file_path+'/tweets_no_scraped_images/', x)).st_mtime)
-            for s_file in files:
-                t_out = time.time()
-                if debug:
-                    print "Processing file:", s_file
-                get_file_images(tweet_file_path, s_file, debug=debug)
+            files = sorted(os.listdir(wip_path), key=lambda x: os.stat(os.path.join(wip_path, x)).st_mtime)
+            for f in files:
+                start_time = time.time()
+                file_path = wip_path + f
+                print "Processing file:", file_path
+                get_file_images(file_path, debug=debug)
                 try:
-                    os.remove(tweet_file_path +'/tweets_no_scraped_images/' + s_file)
+                    os.remove(file_path)
                 except:
-                    print "Error deleting file: " + tweet_file_path +'/tweets_no_scraped_images/' + s_file
+                    print "Error deleting file: " + file_path
                 if debug:
-                    print "Finished in", time.time() - t_out, "seconds "
+                    print "Finished in", time.time() - start_time, "seconds"
         else:
             time.sleep(300)
             n_sleep += 1
@@ -79,9 +90,7 @@ def main(tweet_file_path, debug=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--outdir", help="Directory where tweet files will be written locally", default="./downloads")
-    parser.add_argument("--debug", help="Verbose Screen output for debugging", type=bool, default=False)
+    parser.add_argument("--outdir", help="Directory where tweet files will be written locally", default="downloads/files")
+    parser.add_argument("--debug", help="Verbose logging", action="store_true", default=False)
     args = parser.parse_args()
-    tweet_file_path = args.outdir
-    debug = args.debug
-    main(tweet_file_path, debug = debug)
+    main(args)
