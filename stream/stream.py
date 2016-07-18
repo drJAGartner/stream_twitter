@@ -141,7 +141,7 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # UK: -11.9591 49.637 2.8771 57.863
-    parser.add_argument("coordinates", nargs="+", help="southwest/northeast coordinates: ex. 1 10 2 20")
+    parser.add_argument("coordinates", nargs="+", help="southwest/northeast coordinates (LNG LAT): ex. 1 10 2 20")
     parser.add_argument("--outdir", help="Directory where tweet files will be written locally", default="downloads/files")
     parser.add_argument("--debug", help="Verbose logging", action="store_true", default=False)
     args = parser.parse_args()
