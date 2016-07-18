@@ -56,7 +56,7 @@ def twitterreq(oauth_token, oauth_consumer, url, http_method, parameters, debug=
 def stream_data(response, response_open_time, outdir, debug = False):
     current_block = datetime.datetime.now()
     current_string = str(current_block.date())+"_"+str(current_block.time())+".json"
-    out_file = open(outdir+"/stream/"+current_string, "w", 0)
+    outfile = open(outdir+"/stream/"+current_string, "w", 0)
     try:
         for line in response:
             now = datetime.datetime.now()
@@ -64,20 +64,20 @@ def stream_data(response, response_open_time, outdir, debug = False):
                 print "response at", str(now),
             diff = now - current_block
             if diff.seconds > 180:
-                out_file.close()
+                outfile.close()
                 response_up_time = now - response_open_time
-                os.rename(outdir+"/stream/"+current_string, outdir+"/wip/"+current_string)
+                os.rename(outdir+"/stream/"+current_string, outdir+"/extract/"+current_string)
                 if response_up_time.seconds > 900:
                     return
                 current_block = now
                 if debug:
                     print "\nNew File:", str(current_block)
                 current_string = str(current_block.date())+"_"+str(current_block.time())+".json"
-                out_file = open(outdir+"/stream/"+current_string, "w", 0)
+                outfile = open(outdir+"/stream/"+current_string, "w", 0)
                 #every 2 hours, close existing connection, open under new key to avoid timeout
             try:
                 json.load
-                out_file.write(line.strip()+"\n")
+                outfile.write(line.strip()+"\n")
                 print "."
             except:
                 if debug:
@@ -93,11 +93,11 @@ def main(args):
     coordinates = ','.join(args.coordinates)
     debug = args.debug
     # prep output dirs
-    wip_path = outdir + "/wip/"
     stream_path = outdir + "/stream/"
+    extract_path = outdir + "/extract/"
 
-    dirtools.mkdir_p(wip_path)
     dirtools.mkdir_p(stream_path)
+    dirtools.mkdir_p(extract_path)
 
     if debug:
         print "Start Streaming"
@@ -140,9 +140,8 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    # -11.9591,49.637,2.8771,57.863
-    parser.add_argument("coordinates", nargs="+",
-        help="southwest/northeast coordinates: ex. 1 10 2 20")
+    # UK: -11.9591 49.637 2.8771 57.863
+    parser.add_argument("coordinates", nargs="+", help="southwest/northeast coordinates: ex. 1 10 2 20")
     parser.add_argument("--outdir", help="Directory where tweet files will be written locally", default="downloads/files")
     parser.add_argument("--debug", help="Verbose logging", action="store_true", default=False)
     args = parser.parse_args()
