@@ -13,7 +13,7 @@ def url_to_soup(url):
         'Connection': 'keep-alive'
     }
     req = urllib2.Request(url, headers=hdr)
-    res = urllib2.build_opener(urllib2.HTTPCookieProcessor).open(req)
+    res = urllib2.build_opener(urllib2.HTTPCookieProcessor).open(req, timeout=4)
     return BeautifulSoup(res.read(), "html.parser")
 
 def get_instagram_page_image(soup):
